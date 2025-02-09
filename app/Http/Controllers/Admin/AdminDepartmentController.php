@@ -13,18 +13,30 @@ class AdminDepartmentController extends Controller
      */
     public function index()
     {
-        return view('admin.dashboard.admin-department', [
-            'title' => "AdminDepartment",
+        return view('admin.department.admin_department', [
             'departments' => Department::all()
         ]);
     }
+
+    public function search(Request $request)
+{
+    $search = $request->input('search');
+
+    $departments = Department::where('name', 'like', '%' . $search . '%')
+        ->orWhere('desc', 'like', '%' . $search . '%')
+        ->get();
+
+    return view('admin.department.admin_department', [
+        'departments' => $departments
+    ]);
+}
 
     /**
      * Show the form for creating a new resource.
      */
     public function create()
     {
-        //
+        return view('admin.department.create_department');
     }
 
     /**
@@ -32,7 +44,15 @@ class AdminDepartmentController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:departments,name',
+            'desc' => 'required|string'
+        ]);
+
+        Department::create($validated);
+
+        return redirect()->route('admin.departments.index')
+            ->with('success', 'Department created successfully');
     }
 
     /**
@@ -40,7 +60,7 @@ class AdminDepartmentController extends Controller
      */
     public function show(string $id)
     {
-        //
+       
     }
 
     /**
@@ -48,26 +68,42 @@ class AdminDepartmentController extends Controller
      */
     public function edit(string $id)
 {
-    $department = Department::find($id);
-    return view('admin.department.edit_department', compact('department')); // Ubah sesuai dengan view yang ada
+    $department = Department::findOrFail($id);
+    return view('admin.department.edit_department', [
+        'title' => 'Edit Department',
+        'department' => $department
+    ]);
 }
 
     /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, string $id)
-    {
-        //
-    }
+{
+    $department = Department::findOrFail($id);
 
+    $validated = $request->validate([
+        'name' => 'required|string|max:255|unique:departments,name,' . $id,
+        'desc' => 'required|string'
+    ]);
+
+    $department->update([
+        'name' => $validated['name'],
+        'desc' => $validated['desc']
+    ]);
+
+    return redirect()->route('admin.departments.index')
+        ->with('success', 'Department updated successfully');
+}
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(string $id)
-{
-    $department = Department::find($id);
-    $department->delete();
+    {
+        $department = Department::findOrFail($id);
+        $department->delete();
 
-    return redirect()->route('admin.department.index')->with('success', 'Department berhasil dihapus');
-}
+        return redirect()->route('admin.departments.index')
+            ->with('success', 'Department deleted successfully');
+    }
 }

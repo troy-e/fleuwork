@@ -3,7 +3,7 @@
         <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-8">
             <h1 class="text-2xl font-bold text-gray-800 mb-6">Edit Data Siswa</h1>
 
-            <form action="{{ route('students.update', $student->id) }}" method="POST">
+            <form action="{{ route('admin.students.update', $student->id) }}" method="POST">
                 @csrf
                 @method('PUT')
 
@@ -51,7 +51,7 @@
                     </div> --}}
 
                     <div class="flex items-center justify-between pt-4">
-                        <a href="{{ route('students.index') }}"
+                        <a href="{{ route('admin.students.index') }}"
                             class="inline-flex items-center px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm font-medium rounded-md transition duration-150 ease-in-out">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>

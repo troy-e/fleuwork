@@ -14,10 +14,38 @@ class AdminGradeController extends Controller
      */
     public function index()
     {
-        $grades = Grade::with(['department'])->get();
-        return view('admin.dashboard.admin-grade', [
+        $grades = Grade::with(['department', 'students'])->get();
+        return view('admin.grade.admin_grade', [
             'title' => "AdminGrade",
-            'grades' => $grades
+            'grades' => $grades,
+            'search' => ''
+        ]);
+    }
+
+    public function search(Request $request)
+    {
+        $search = $request->input('search');
+
+        $grades = Grade::with(['department', 'students']);
+
+        if ($search) {
+            $grades = $grades->where(function($query) use ($search) {
+                $query->where('name', 'like', '%' . $search . '%')
+                    ->orWhereHas('department', function($query) use ($search) {
+                        $query->where('name', 'like', '%' . $search . '%');
+                    })
+                    ->orWhereHas('students', function($query) use ($search) {
+                        $query->where('name', 'like', '%' . $search . '%');
+                    });
+            });
+        }
+
+        $grades = $grades->get();
+
+        return view('admin.grade.admin_grade', [
+            'title' => "AdminGrade",
+            'grades' => $grades,
+            'search' => $search
         ]);
     }
 
@@ -25,35 +53,28 @@ class AdminGradeController extends Controller
      * Show the form for creating a new resource.
      */
     public function create()
-    {
-        // $grades = Grade::all();
-        // return view('admin.grade.create', compact('grades'));
-        return view('admin.grade.create_grade',[
-            "title" => "Create New Data",
-            'grades' =>  Grade::all(),
-            'department' => Department::all()
-        ]);
-    }
+{
+    return view('admin.grade.create_grade', [
+        "title" => "Create New Data",
+        'grades' => Grade::all(),
+        'departments' => Department::all() // Changed from 'department' to 'departments'
+    ]);
+}
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'grade' => 'required|string|max:100|unique:grades,grade',
-            //'department_id' => 'required|exists:departments,id',
-            // 'grade_id'  => 'required|exists:grades,id',
-            // 'department_id'  => 'required|exists:departments,id',
-        ]);
-        Grade::create([
-            'grade' => $validated['grade'],
-            'department_id' => 1
-            //'department_id' => $request->department_id,
+public function store(Request $request)
+{
+    $validated = $request->validate([
+        'name' => 'required|string|max:100|unique:grades,name',
+        'department_id' => 'required|exists:departments,id',
+    ]);
 
-        ]);
-        return redirect()->route('grades.index')->with('success', 'Grade berhasil diubah!');
-    }
+    Grade::create([
+        'name' => $validated['name'],
+        'department_id' => $validated['department_id']
+    ]);
+
+    return redirect()->route('admin.grades.index')->with('success', 'Grade created successfully!');
+}
 
     /**
      * Display the specified resource.
@@ -84,7 +105,17 @@ class AdminGradeController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $grade = Grade::findOrFail($id);
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:grades,name,' . $id,
+            'department_id' => 'required|exists:departments,id'
+        ]);
+
+        $grade->update($validated);
+
+        return redirect()->route('admin.grades.index')
+            ->with('success', 'Grade updated successfully');
     }
 
     /**
@@ -95,6 +126,7 @@ class AdminGradeController extends Controller
         $grade = Grade::findOrFail($id);
         $grade->delete();
 
-        return redirect()->route('grades.index')->with('success', 'Grade berhasil dihapus!');
+        return redirect()->route('admin.grades.index')  
+            ->with('success', 'Grade deleted successfully!');
     }
 }
